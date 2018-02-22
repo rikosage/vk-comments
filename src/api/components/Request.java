@@ -64,8 +64,6 @@ public class Request {
 
         result += "access_token=" + this.token;
 
-        System.out.println(result);
-
         return result;
 
     }
