@@ -1,7 +1,9 @@
-package com.company;
+package api.components;
 
-import api.API;
 import api.Credentials;
+import api.components.RequestError;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -18,8 +20,13 @@ public class Request {
     private HashMap<String, String> params;
     private String token = Credentials.SERVICE_KEY.get();
 
+    protected String response;
+
+    protected RequestError error;
+
     /**
      * Constructor
+     *
      * @param method Method name
      * @param params GET-parameters as HashMap
      */
@@ -29,6 +36,7 @@ public class Request {
     }
 
     /**
+     * Constructor
      *
      * @param method Method name
      * @param params GET-parameters as HashMap
@@ -39,15 +47,15 @@ public class Request {
         this.token = key;
     }
 
+    /**
+     * Builds required url depends method and GET-params of class properties
+     * @return Absolute url
+     */
     protected String makeUrl() {
 
-        String result = API.BASE_URL.get() + this.method;
+        String result = "https://api.vk.com/method/" + this.method + "?";
 
         Iterator it = this.params.entrySet().iterator();
-
-        if (!this.params.isEmpty()) {
-            result += "?";
-        }
 
         while (it.hasNext()) {
             Map.Entry item = (Map.Entry) it.next();
@@ -62,7 +70,11 @@ public class Request {
 
     }
 
-    public String make() throws IOException {
+    /**
+     * Call API method and save response to property
+     * @throws IOException Exception
+     */
+    public void makeRequest() throws IOException {
 
         URL urlObject = new URL(this.makeUrl());
         HttpURLConnection connection = (HttpURLConnection) urlObject.openConnection();
@@ -70,8 +82,9 @@ public class Request {
         connection.setRequestMethod("GET");
 
         BufferedReader in = new BufferedReader(
-            new InputStreamReader(connection.getInputStream())
+                new InputStreamReader(connection.getInputStream())
         );
+
 
         String inputLine;
         StringBuffer response = new StringBuffer();
@@ -81,8 +94,29 @@ public class Request {
         }
         in.close();
 
-        return response.toString();
+        try {
+            JSONObject json = new JSONObject(response.toString()).getJSONObject("error");
+
+            this.error = new RequestError(
+                json.getInt("error_code"),
+                json.getString("error_msg")
+            );
+
+        } catch (JSONException e) {
+            this.response = response.toString();
+        }
 
     }
 
+    public String getResponse() {
+        return this.response;
+    }
+
+    public RequestError getError() {
+        return error;
+    }
+
+    public boolean hasError() {
+        return this.error != null;
+    }
 }

@@ -1,29 +1,26 @@
 package com.company;
 
-import api.API;
-import org.json.JSONArray;
-import org.json.JSONObject;
+import api.request.Group;
 
 import java.io.IOException;
-import java.util.HashMap;
+import java.util.Scanner;
 
 public class Main {
 
     public static void main(String[] arguments) throws IOException {
 
-        HashMap<String, String> hash = new HashMap<String, String>();
+        System.out.print("Hi there! Please, input group domain for continue: ");
+        Scanner reader = new Scanner(System.in);
 
-        hash.put("group_id", "tnull");
+        Group group = new Group(reader.next());
 
-        String response = (new Request(API.METHOD__GROUP_GET_BY_ID.get(), hash)).make();
+        if (group.hasError()) {
+            System.out.println(group.getError().getMessage());
+            return;
+        }
 
-        JSONObject json = (new JSONObject(response))
-                .getJSONArray("response")
-                .getJSONObject(0);
+        System.out.println(String.format("Success!\nGroup id: %s\nGroup name: %s", group.getGid(), group.getName()));
 
-        int gid = json.getInt("gid");
-
-        System.out.println(gid);
 
     }
 
